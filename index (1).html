@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LAP UAT — MFL × FinBox</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F3EF;--surface:#FFFFFF;--border:rgba(0,0,0,0.09);--border-md:rgba(0,0,0,0.15);
+  --text:#18181A;--muted:#6B6B68;--hint:#9B9B98;
+  --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
+  --teal:#0F6E56;--teal-lt:#E1F5EE;
+  --amber:#854F0B;--amber-lt:#FAEEDA;
+  --pink:#993556;--pink-lt:#FBEAF0;
+  --red:#A32D2D;--red-lt:#FCEBEB;
+  --green:#3B6D11;--green-lt:#EAF3DE;
+  --gray:#5F5E5A;--gray-lt:#F1EFE8;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 2px 12px rgba(0,0,0,0.07);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-pill{background:var(--blue-dk);color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:17px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 4px;font-size:13px}
+.user-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
+.role-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;letter-spacing:.04em}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border-md);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg);border-color:var(--blue)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue-dk);border-color:var(--blue-dk)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:var(--red-lt);color:var(--red);border-color:var(--red)}
+
+.main-layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:16px 0;flex-shrink:0;overflow-y:auto}
+.sidebar-section{padding:0 12px;margin-bottom:4px}
+.sidebar-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--hint);padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:background .12s;color:var(--text);font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--bg)}
+.nav-item.active{background:var(--blue-lt);color:var(--blue-dk)}
+.nav-count{background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:11px;font-weight:600;padding:1px 7px;color:var(--muted)}
+.nav-item.active .nav-count{background:var(--blue-dk);color:#fff;border-color:var(--blue-dk)}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── LOGIN ── */
+#login-view{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 32px;width:360px;box-shadow:var(--shadow)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .logo-pill{font-size:13px;padding:5px 14px}
+.login-title{font-family:'DM Serif Display',serif;font-size:22px;text-align:center;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.04em}
+.form-input{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);color:var(--text);transition:border-color .15s}
+.form-input:focus{outline:none;border-color:var(--blue)}
+.form-select{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);color:var(--text)}
+.form-textarea{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;min-height:80px}
+.error-msg{background:var(--red-lt);color:var(--red);border-radius:var(--radius);padding:9px 12px;font-size:13px;margin-bottom:14px;display:none}
+.success-msg{background:var(--green-lt);color:var(--green);border-radius:var(--radius);padding:9px 12px;font-size:13px;margin-bottom:14px;display:none}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-family:'DM Serif Display',serif;font-size:22px}
+.page-sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.link-btn{color:var(--blue);cursor:pointer;font-weight:500;border:none;background:none;font-size:13px;font-family:'DM Sans',sans-serif;text-decoration:underline}
+.link-btn:hover{color:var(--blue-dk)}
+
+/* ── STATUS BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-blue{background:var(--blue-lt);color:var(--blue-dk)}
+.badge-teal{background:var(--teal-lt);color:var(--teal)}
+.badge-amber{background:var(--amber-lt);color:var(--amber)}
+.badge-pink{background:var(--pink-lt);color:var(--pink)}
+.badge-red{background:var(--red-lt);color:var(--red)}
+.badge-green{background:var(--green-lt);color:var(--green)}
+.badge-gray{background:var(--gray-lt);color:var(--gray)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface)}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* ── FORM GRID ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.form-span-2{grid-column:span 2}
+.section-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.section-heading{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:14px}
+
+/* ── STAGE PIPELINE ── */
+.pipeline{display:flex;align-items:center;gap:0;overflow-x:auto;padding:14px 0;margin-bottom:20px}
+.pipe-step{display:flex;align-items:center}
+.pipe-node{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;border:1.5px solid var(--border-md);background:var(--surface);color:var(--muted);transition:all .15s}
+.pipe-node:hover{border-color:var(--blue);color:var(--blue)}
+.pipe-node.done{background:var(--teal-lt);border-color:var(--teal);color:var(--teal)}
+.pipe-node.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.pipe-node.locked{opacity:.45;cursor:default}
+.pipe-arrow{color:var(--hint);font-size:14px;padding:0 4px;flex-shrink:0}
+
+/* ── CHECKLIST ── */
+.checklist{list-style:none}
+.check-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.check-item:last-child{border-bottom:none}
+.check-box{width:18px;height:18px;border:2px solid var(--border-md);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.check-item.checked .check-box{background:var(--teal);border-color:var(--teal)}
+.check-item.checked .check-box::after{content:'✓';color:#fff;font-size:11px;font-weight:700}
+.check-label{font-size:13px;color:var(--text)}
+.check-item.checked .check-label{color:var(--muted);text-decoration:line-through}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center}
+.stat-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text)}
+.stat-label{font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+
+/* ── STEP INDICATOR ── */
+.step-tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto}
+.step-tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.step-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.step-tab.done{color:var(--teal)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--radius);font-size:13px;z-index:1000;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--teal)}
+.toast.error{background:var(--red)}
+
+/* ── CONFIG BANNER ── */
+.config-banner{background:var(--amber-lt);border:1px solid var(--amber);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--amber)}
+.config-banner strong{font-weight:600}
+.config-banner code{background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px}
+
+/* ── UTIL ── */
+.hidden{display:none!important}
+.flex{display:flex;align-items:center;gap:8px}
+.mt-8{margin-top:8px}
+.mt-16{margin-top:16px}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-text{font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- CONFIG SETUP MODAL (shown if Supabase not configured) -->
+<div class="modal-overlay" id="config-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title">⚙️ Supabase Configuration</span>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Enter your Supabase project credentials. These are saved in your browser.</p>
+      <div class="form-group">
+        <label class="form-label">Supabase Project URL</label>
+        <input class="form-input" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supabase Anon Key</label>
+        <input class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."/>
+      </div>
+      <div class="error-msg" id="cfg-error"></div>
+      <div style="background:var(--blue-lt);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--blue-dk);line-height:1.7">
+        <strong>Where to find these?</strong><br>
+        1. Go to <strong>supabase.com</strong> → Your Project<br>
+        2. Click <strong>Settings → API</strong><br>
+        3. Copy <strong>Project URL</strong> and <strong>anon public</strong> key
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveConfig()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-view">
+  <div class="login-card">
+    <div class="login-logo"><span class="logo-pill">LAP UAT</span></div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">MFL × FinBox — Loan Against Property</div>
+    <div class="error-msg" id="login-error"></div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="login-email" type="email" placeholder="user@mfl.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="login-pwd" type="password" placeholder="••••••••"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Sign In</button>
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:14px">
+      <button class="link-btn" onclick="showConfigModal()">⚙ Configure Supabase</button>
+    </p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="hidden">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="logo-pill">LAP UAT</span>
+      <span class="topbar-title">MFL Workflow</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="nav-avatar" style="background:var(--blue-lt);color:var(--blue-dk)"></div>
+        <span id="nav-name" style="font-weight:500"></span>
+        <span class="role-badge badge-blue" id="nav-role"></span>
+      </div>
+      <button class="btn btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Queue</div>
+        <button class="nav-item active" id="nav-pool" onclick="showSection('pool')">
+          All Cases <span class="nav-count" id="cnt-pool">0</span>
+        </button>
+        <button class="nav-item" id="nav-my" onclick="showSection('my')">
+          My Cases <span class="nav-count" id="cnt-my">0</span>
+        </button>
+      </div>
+      <div class="sidebar-section" id="admin-nav" style="display:none">
+        <div class="sidebar-label">Admin</div>
+        <button class="nav-item" id="nav-users" onclick="showSection('users')">Users & Roles</button>
+        <button class="nav-item" id="nav-branches" onclick="showSection('branches')">Branches</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- POOL VIEW -->
+      <div id="sec-pool">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All Cases</div>
+            <div class="page-sub">Cases available in the pool</div>
+          </div>
+          <button class="btn btn-primary" onclick="openNewLead()">+ New Lead</button>
+        </div>
+        <div class="stats-grid" id="pool-stats"></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Case Queue</span>
+            <div class="flex">
+              <select class="form-select" style="width:160px" id="filter-stage" onchange="loadPool()">
+                <option value="">All Stages</option>
+                <option>QDE</option><option>DDE</option><option>DDE Review</option>
+                <option>BPO Review</option><option>Under Review</option>
+                <option>In Principle Sanction</option><option>Loan Sanction</option>
+                <option>Disbursal Ready</option><option>Fully Disbursed</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Application ID</th><th>Customer Name</th><th>Mobile</th>
+                <th>Stage</th><th>Product</th><th>Branch</th><th>Assigned To</th><th>Received</th><th>Action</th>
+              </tr></thead>
+              <tbody id="pool-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY CASES -->
+      <div id="sec-my" class="hidden">
+        <div class="page-header">
+          <div><div class="page-title">My Cases</div><div class="page-sub">Cases assigned to you</div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Application ID</th><th>Customer Name</th><th>Stage</th><th>Branch</th><th>Last Updated</th><th>Action</th>
+              </tr></thead>
+              <tbody id="my-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS ADMIN -->
+      <div id="sec-users" class="hidden">
+        <div class="page-header">
+          <div><div class="page-title">Users & Roles</div><div class="page-sub">Manage system users and access</div></div>
+          <button class="btn btn-primary" onclick="openNewUser()">+ New User</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Branch</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="users-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- BRANCHES ADMIN -->
+      <div id="sec-branches" class="hidden">
+        <div class="page-header">
+          <div><div class="page-title">Branches</div><div class="page-sub">Manage branch codes and names</div></div>
+          <button class="btn btn-primary" onclick="openNewBranch()">+ New Branch</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Branch Code</th><th>Branch Name</th><th>Location</th><th>Actions</th></tr></thead>
+              <tbody id="branches-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: NEW LEAD (QDE + DDE) ═══ -->
+<div class="modal-overlay" id="lead-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <span class="modal-title" id="lead-modal-title">New Lead Application</span>
+      <button class="modal-close" onclick="closeModal('lead-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="step-tabs" id="lead-tabs">
+        <div class="step-tab active" data-step="qde">1. QDE — Basic Info</div>
+        <div class="step-tab" data-step="dde-personal">2. Personal Details</div>
+        <div class="step-tab" data-step="dde-property">3. Property Details</div>
+        <div class="step-tab" data-step="dde-income">4. Income & Liability</div>
+        <div class="step-tab" data-step="dde-docs">5. Documents</div>
+      </div>
+      <div id="step-qde">
+        <div class="section-heading">Basic Loan Information</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Applicant First Name *</label><input class="form-input" id="f-first-name" placeholder="Rajesh"/></div>
+          <div class="form-group"><label class="form-label">Applicant Last Name *</label><input class="form-input" id="f-last-name" placeholder="Kumar"/></div>
+          <div class="form-group"><label class="form-label">Mobile Number *</label><input class="form-input" id="f-mobile" placeholder="9876543210" maxlength="10"/></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" placeholder="rajesh@email.com" type="email"/></div>
+          <div class="form-group"><label class="form-label">Loan Amount Required (₹) *</label><input class="form-input" id="f-loan-amount" placeholder="2500000" type="number"/></div>
+          <div class="form-group"><label class="form-label">Loan Purpose *</label>
+            <select class="form-select" id="f-loan-purpose">
+              <option value="">Select purpose</option>
+              <option>Business Expansion</option><option>Medical Expenses</option>
+              <option>Education</option><option>Home Renovation</option><option>Debt Consolidation</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Product Type *</label>
+            <select class="form-select" id="f-product-type">
+              <option value="">Select</option><option>Micro LAP</option><option>SBL</option><option>LAP Standard</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Branch *</label>
+            <select class="form-select" id="f-branch"></select>
+          </div>
+          <div class="form-group"><label class="form-label">Source Type</label>
+            <select class="form-select" id="f-source">
+              <option>PC Mortgage</option><option>Branch Mortgage</option><option>DSA</option><option>Direct</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Tenure (Months)</label><input class="form-input" id="f-tenure" placeholder="120" type="number"/></div>
+        </div>
+      </div>
+
+      <div id="step-dde-personal" class="hidden">
+        <div class="section-heading">Personal Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="f-dob" type="date"/></div>
+          <div class="form-group"><label class="form-label">Gender</label>
+            <select class="form-select" id="f-gender"><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">PAN Number</label><input class="form-input" id="f-pan" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase"/></div>
+          <div class="form-group"><label class="form-label">Aadhaar Number</label><input class="form-input" id="f-aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14"/></div>
+          <div class="form-group"><label class="form-label">Marital Status</label>
+            <select class="form-select" id="f-marital"><option>Married</option><option>Single</option><option>Divorced</option><option>Widowed</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">No. of Dependents</label><input class="form-input" id="f-dependents" type="number" placeholder="2"/></div>
+          <div class="form-group form-span-2"><label class="form-label">Current Address</label><input class="form-input" id="f-address" placeholder="123, Main Street, Bengaluru - 560001"/></div>
+          <div class="form-group"><label class="form-label">Employment Type</label>
+            <select class="form-select" id="f-employment"><option>Salaried</option><option>Self Employed</option><option>Business</option><option>Professional</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Employer / Business Name</label><input class="form-input" id="f-employer" placeholder="ABC Pvt Ltd"/></div>
+        </div>
+        <hr class="section-divider"/>
+        <div class="section-heading">Co-Applicant Details (if any)</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Co-Applicant Name</label><input class="form-input" id="f-co-name" placeholder="Priya Kumar"/></div>
+          <div class="form-group"><label class="form-label">Co-Applicant Mobile</label><input class="form-input" id="f-co-mobile" placeholder="9876543211"/></div>
+          <div class="form-group"><label class="form-label">Co-Applicant PAN</label><input class="form-input" id="f-co-pan" placeholder="FGHIJ5678K" style="text-transform:uppercase"/></div>
+          <div class="form-group"><label class="form-label">Relationship</label>
+            <select class="form-select" id="f-co-relation"><option value="">-- None --</option><option>Spouse</option><option>Parent</option><option>Child</option><option>Sibling</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div id="step-dde-property" class="hidden">
+        <div class="section-heading">Property Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Property Type *</label>
+            <select class="form-select" id="f-prop-type"><option value="">Select</option><option>Residential</option><option>Commercial</option><option>Industrial</option><option>Plot</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Property Usage</label>
+            <select class="form-select" id="f-prop-usage"><option>Self Occupied</option><option>Rented</option><option>Vacant</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Property Age (Years)</label><input class="form-input" id="f-prop-age" type="number" placeholder="10"/></div>
+          <div class="form-group"><label class="form-label">Built-up Area (sq.ft)</label><input class="form-input" id="f-prop-area" type="number" placeholder="1200"/></div>
+          <div class="form-group form-span-2"><label class="form-label">Property Address</label><input class="form-input" id="f-prop-address" placeholder="45, MG Road, Bengaluru - 560025"/></div>
+          <div class="form-group"><label class="form-label">Market Value (₹)</label><input class="form-input" id="f-market-val" type="number" placeholder="5000000"/></div>
+          <div class="form-group"><label class="form-label">Distress Value (₹)</label><input class="form-input" id="f-distress-val" type="number" placeholder="4000000"/></div>
+          <div class="form-group"><label class="form-label">Ownership Type</label>
+            <select class="form-select" id="f-ownership"><option>Freehold</option><option>Leasehold</option><option>Joint</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Title Clear</label>
+            <select class="form-select" id="f-title"><option>Yes</option><option>No</option><option>Under Verification</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div id="step-dde-income" class="hidden">
+        <div class="section-heading">Income Assessment</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Monthly Income (₹)</label><input class="form-input" id="f-monthly-income" type="number" placeholder="80000"/></div>
+          <div class="form-group"><label class="form-label">Annual Income (₹)</label><input class="form-input" id="f-annual-income" type="number" placeholder="960000"/></div>
+          <div class="form-group"><label class="form-label">Other Income (₹/month)</label><input class="form-input" id="f-other-income" type="number" placeholder="10000"/></div>
+          <div class="form-group"><label class="form-label">Income Proof Type</label>
+            <select class="form-select" id="f-income-proof"><option>ITR</option><option>Salary Slip</option><option>Bank Statement</option><option>Audited Financials</option></select>
+          </div>
+        </div>
+        <hr class="section-divider"/>
+        <div class="section-heading">Liabilities & Existing Loans</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Existing EMI Obligations (₹/month)</label><input class="form-input" id="f-existing-emi" type="number" placeholder="15000"/></div>
+          <div class="form-group"><label class="form-label">Total Outstanding Loans (₹)</label><input class="form-input" id="f-outstanding" type="number" placeholder="500000"/></div>
+          <div class="form-group"><label class="form-label">Credit Score</label><input class="form-input" id="f-credit-score" type="number" placeholder="720" min="300" max="900"/></div>
+          <div class="form-group"><label class="form-label">Credit Bureau</label>
+            <select class="form-select" id="f-bureau"><option>CIBIL</option><option>Experian</option><option>Equifax</option><option>CRIF</option></select>
+          </div>
+          <div class="form-group form-span-2"><label class="form-label">Remarks / Notes</label><textarea class="form-textarea" id="f-remarks" placeholder="Any additional information..."></textarea></div>
+        </div>
+      </div>
+
+      <div id="step-dde-docs" class="hidden">
+        <div class="section-heading">Document Checklist</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Mark documents as collected/received. Actual upload can be done after submission.</p>
+        <ul class="checklist" id="doc-checklist">
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">PAN Card (Applicant)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Aadhaar Card (Applicant)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">PAN Card (Co-Applicant)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Aadhaar Card (Co-Applicant)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Last 6 months Bank Statement</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Income Tax Returns (2 years)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Salary Slips (3 months)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Property Documents (Title Deed)</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Encumbrance Certificate</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Property Tax Receipts</span></li>
+          <li class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">Passport Size Photographs</span></li>
+        </ul>
+      </div>
+
+      <div class="error-msg" id="lead-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="lead-prev-btn" onclick="leadStepNav(-1)" style="display:none">← Previous</button>
+      <button class="btn btn-primary" id="lead-next-btn" onclick="leadStepNav(1)">Next →</button>
+      <button class="btn btn-primary" id="lead-submit-btn" onclick="submitLead()" style="display:none">Submit Application</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: CASE DETAIL ═══ -->
+<div class="modal-overlay" id="case-modal">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="case-modal-id"></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="case-modal-name"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('case-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Pipeline -->
+      <div class="pipeline" id="case-pipeline"></div>
+      <!-- Case info tabs -->
+      <div class="step-tabs">
+        <div class="step-tab active" onclick="caseTab('overview',this)">Overview</div>
+        <div class="step-tab" onclick="caseTab('checklist',this)">Checklist</div>
+        <div class="step-tab" onclick="caseTab('details',this)">Full Details</div>
+        <div class="step-tab" onclick="caseTab('history',this)">Stage History</div>
+      </div>
+      <div id="case-tab-overview"></div>
+      <div id="case-tab-checklist" class="hidden"></div>
+      <div id="case-tab-details" class="hidden"></div>
+      <div id="case-tab-history" class="hidden"></div>
+    </div>
+    <div class="modal-footer" id="case-modal-footer"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: NEW USER ═══ -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">Create New User</span>
+      <button class="modal-close" onclick="closeModal('user-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="u-name" placeholder="Anitha Rajan"/></div>
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="u-email" type="email" placeholder="anitha@mfl.com"/></div>
+      <div class="form-group"><label class="form-label">Password *</label><input class="form-input" id="u-pwd" type="password" placeholder="Min 8 characters"/></div>
+      <div class="form-group"><label class="form-label">Role *</label>
+        <select class="form-select" id="u-role">
+          <option value="">Select role</option>
+          <option value="ADMIN">Admin</option>
+          <option value="CO">Credit Officer (CO)</option>
+          <option value="BPO">BPO / BPM User</option>
+          <option value="BCM">BCM User</option>
+          <option value="BBM">BBM User</option>
+          <option value="OPS">OPS User</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Branch *</label><select class="form-select" id="u-branch"></select></div>
+      <div class="error-msg" id="user-error"></div>
+      <div class="success-msg" id="user-success"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: NEW BRANCH ═══ -->
+<div class="modal-overlay" id="branch-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Add Branch</span>
+      <button class="modal-close" onclick="closeModal('branch-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Branch Code *</label><input class="form-input" id="b-code" placeholder="S0142-SULB-VYTTILA" style="text-transform:uppercase"/></div>
+      <div class="form-group"><label class="form-label">Branch Name *</label><input class="form-input" id="b-name" placeholder="Vyttila Branch"/></div>
+      <div class="form-group"><label class="form-label">Location / City</label><input class="form-input" id="b-city" placeholder="Kochi"/></div>
+      <div class="error-msg" id="branch-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('branch-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createBranch()">Add Branch</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG & SUPABASE
+// ══════════════════════════════════════════════
+let sb = null;
+let currentUser = null;
+let currentProfile = null;
+let currentCase = null;
+let editingLeadId = null;
+
+const STAGES = ['QDE','DDE','DDE Review','BPO Review','Under Review','In Principle Sanction','Loan Sanction','Disbursal Ready','Fully Disbursed'];
+
+const ROLE_STAGE_MAP = {
+  CO:  ['QDE','DDE','DDE Review','Loan Sanction','Disbursal Ready'],
+  BPO: ['BPO Review','Disbursal Ready'],
+  BCM: ['Under Review','In Principle Sanction'],
+  BBM: ['In Principle Sanction'],
+  OPS: ['Disbursal Ready'],
+  ADMIN: STAGES
+};
+
+const STAGE_BADGE = {
+  'QDE':'badge-gray','DDE':'badge-gray','DDE Review':'badge-blue','BPO Review':'badge-blue',
+  'Under Review':'badge-amber','In Principle Sanction':'badge-amber','Loan Sanction':'badge-teal',
+  'Disbursal Ready':'badge-pink','Fully Disbursed':'badge-green'
+};
+
+function getSbConfig(){
+  return {url:localStorage.getItem('sb_url'),key:localStorage.getItem('sb_key')};
+}
+
+function initSupabase(){
+  const cfg = getSbConfig();
+  if(cfg.url && cfg.key){
+    sb = supabase.createClient(cfg.url, cfg.key);
+    return true;
+  }
+  return false;
+}
+
+function showConfigModal(){
+  const cfg = getSbConfig();
+  if(cfg.url) document.getElementById('cfg-url').value = cfg.url;
+  if(cfg.key) document.getElementById('cfg-key').value = cfg.key;
+  document.getElementById('config-modal').classList.add('open');
+}
+
+function saveConfig(){
+  const url = document.getElementById('cfg-url').value.trim();
+  const key = document.getElementById('cfg-key').value.trim();
+  if(!url||!key){showEl('cfg-error','Please fill both fields');return;}
+  localStorage.setItem('sb_url',url);
+  localStorage.setItem('sb_key',key);
+  document.getElementById('config-modal').classList.remove('open');
+  initSupabase();
+  showToast('Supabase configured!','success');
+}
+
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+async function doLogin(){
+  if(!sb){showEl('login-error','Please configure Supabase first');return;}
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-pwd').value;
+  if(!email||!pwd){showEl('login-error','Enter email and password');return;}
+  hideEl('login-error');
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pwd});
+  if(error){showEl('login-error',error.message);return;}
+  currentUser = data.user;
+  await loadProfile();
+  enterApp();
+}
+
+async function loadProfile(){
+  const {data} = await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  currentProfile = data;
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null; currentProfile=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-view').style.display='flex';
+}
+
+function enterApp(){
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  const p = currentProfile;
+  const initials = (p?.full_name||'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('nav-avatar').textContent = initials;
+  document.getElementById('nav-name').textContent = p?.full_name||currentUser.email;
+  document.getElementById('nav-role').textContent = p?.role||'USER';
+  if(p?.role==='ADMIN') document.getElementById('admin-nav').style.display='block';
+  loadPool();
+  loadMyCases();
+  loadBranchOptions();
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function showSection(sec){
+  ['pool','my','users','branches'].forEach(s=>{
+    document.getElementById('sec-'+s).classList.toggle('hidden', s!==sec);
+    const nav = document.getElementById('nav-'+s);
+    if(nav) nav.classList.toggle('active', s===sec);
+  });
+  if(sec==='users') loadUsers();
+  if(sec==='branches') loadBranches();
+}
+
+// ══════════════════════════════════════════════
+// POOL
+// ══════════════════════════════════════════════
+async function loadPool(){
+  if(!sb) return;
+  const stageFilter = document.getElementById('filter-stage').value;
+  let q = sb.from('leads').select('*').order('created_at',{ascending:false});
+  if(stageFilter) q = q.eq('stage', stageFilter);
+
+  const {data:leads} = await q;
+  renderPool(leads||[]);
+  renderStats(leads||[]);
+  document.getElementById('cnt-pool').textContent = (leads||[]).length;
+}
+
+function renderStats(leads){
+  const counts = {};
+  STAGES.forEach(s=>counts[s]=0);
+  leads.forEach(l=>{ if(counts[l.stage]!==undefined) counts[l.stage]++; });
+  const visible = ['DDE Review','BPO Review','Under Review','In Principle Sanction','Loan Sanction','Disbursal Ready','Fully Disbursed'];
+  document.getElementById('pool-stats').innerHTML = visible.map(s=>`
+    <div class="stat-card">
+      <div class="stat-num">${counts[s]||0}</div>
+      <div class="stat-label">${s}</div>
+    </div>`).join('');
+}
+
+function renderPool(leads){
+  const tbody = document.getElementById('pool-body');
+  if(!leads.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">No cases found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l=>`
+    <tr>
+      <td><button class="link-btn" onclick="openCase('${l.id}')">${l.application_id}</button></td>
+      <td>${l.first_name} ${l.last_name}</td>
+      <td>${l.mobile||'-'}</td>
+      <td><span class="badge ${STAGE_BADGE[l.stage]||'badge-gray'}">${l.stage}</span></td>
+      <td>${l.product_type||'-'}</td>
+      <td>${l.branch_code||'-'}</td>
+      <td>${l.assigned_to_name||'<span style="color:var(--hint)">Unassigned</span>'}</td>
+      <td style="color:var(--muted)">${timeAgo(l.created_at)}</td>
+      <td>
+        ${!l.assigned_to ? `<button class="btn btn-sm" onclick="selfAssign('${l.id}')">Pick Case</button>` : 
+          `<button class="btn btn-sm" onclick="openCase('${l.id}')">Open</button>`}
+      </td>
+    </tr>`).join('');
+}
+
+async function selfAssign(leadId){
+  const {error} = await sb.from('leads').update({
+    assigned_to: currentUser.id,
+    assigned_to_name: currentProfile?.full_name||currentUser.email
+  }).eq('id',leadId);
+  if(!error){ showToast('Case assigned to you','success'); loadPool(); loadMyCases(); }
+}
+
+async function loadMyCases(){
+  if(!sb) return;
+  const {data} = await sb.from('leads').select('*').eq('assigned_to',currentUser?.id).order('updated_at',{ascending:false});
+  const tbody = document.getElementById('my-body');
+  document.getElementById('cnt-my').textContent = (data||[]).length;
+  if(!data?.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No cases assigned to you</td></tr>';
+    return;
+  }
+  tbody.innerHTML = (data||[]).map(l=>`
+    <tr>
+      <td><button class="link-btn" onclick="openCase('${l.id}')">${l.application_id}</button></td>
+      <td>${l.first_name} ${l.last_name}</td>
+      <td><span class="badge ${STAGE_BADGE[l.stage]||'badge-gray'}">${l.stage}</span></td>
+      <td>${l.branch_code||'-'}</td>
+      <td style="color:var(--muted)">${timeAgo(l.updated_at)}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="openCase('${l.id}')">Open →</button></td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// NEW LEAD
+// ══════════════════════════════════════════════
+let leadStep = 0;
+const LEAD_STEPS = ['qde','dde-personal','dde-property','dde-income','dde-docs'];
+
+function openNewLead(){
+  leadStep = 0;
+  editingLeadId = null;
+  document.getElementById('lead-modal-title').textContent = 'New Lead Application';
+  // reset form
+  document.querySelectorAll('#lead-modal input, #lead-modal select, #lead-modal textarea').forEach(el=>el.value='');
+  document.querySelectorAll('#doc-checklist .check-item').forEach(el=>el.classList.remove('checked'));
+  renderLeadStep();
+  document.getElementById('lead-modal').classList.add('open');
+}
+
+function renderLeadStep(){
+  LEAD_STEPS.forEach((s,i)=>{
+    document.getElementById('step-'+s).classList.toggle('hidden', i!==leadStep);
+    const tab = document.querySelector(`[data-step="${s}"]`);
+    if(tab){
+      tab.classList.toggle('active', i===leadStep);
+      tab.classList.toggle('done', i<leadStep);
+    }
+  });
+  document.getElementById('lead-prev-btn').style.display = leadStep>0?'inline-flex':'none';
+  document.getElementById('lead-next-btn').style.display = leadStep<LEAD_STEPS.length-1?'inline-flex':'none';
+  document.getElementById('lead-submit-btn').style.display = leadStep===LEAD_STEPS.length-1?'inline-flex':'none';
+}
+
+function leadStepNav(dir){
+  if(dir===1 && !validateLeadStep()) return;
+  leadStep = Math.max(0, Math.min(LEAD_STEPS.length-1, leadStep+dir));
+  renderLeadStep();
+}
+
+function validateLeadStep(){
+  hideEl('lead-error');
+  if(leadStep===0){
+    const req = ['f-first-name','f-last-name','f-mobile','f-loan-amount','f-loan-purpose','f-product-type','f-branch'];
+    for(const id of req){
+      if(!document.getElementById(id).value.trim()){
+        showEl('lead-error','Please fill all required (*) fields');
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function toggleCheck(el){ el.classList.toggle('checked'); }
+
+async function submitLead(){
+  if(!validateLeadStep()) return;
+  const docsDone = [...document.querySelectorAll('#doc-checklist .check-item.checked')].map(el=>el.querySelector('.check-label').textContent);
+
+  const appId = 'LAP' + Date.now().toString().slice(-8);
+  const payload = {
+    application_id: appId,
+    first_name: v('f-first-name'), last_name: v('f-last-name'),
+    mobile: v('f-mobile'), email: v('f-email'),
+    loan_amount: nv('f-loan-amount'), loan_purpose: v('f-loan-purpose'),
+    product_type: v('f-product-type'), branch_code: v('f-branch'),
+    source_type: v('f-source'), tenure: nv('f-tenure'),
+    dob: v('f-dob'), gender: v('f-gender'),
+    pan: v('f-pan')?.toUpperCase(), aadhaar: v('f-aadhaar'),
+    marital_status: v('f-marital'), dependents: nv('f-dependents'),
+    address: v('f-address'), employment_type: v('f-employment'),
+    employer: v('f-employer'),
+    co_applicant_name: v('f-co-name'), co_applicant_mobile: v('f-co-mobile'),
+    co_applicant_pan: v('f-co-pan')?.toUpperCase(), co_relation: v('f-co-relation'),
+    property_type: v('f-prop-type'), property_usage: v('f-prop-usage'),
+    property_age: nv('f-prop-age'), property_area: nv('f-prop-area'),
+    property_address: v('f-prop-address'),
+    market_value: nv('f-market-val'), distress_value: nv('f-distress-val'),
+    ownership_type: v('f-ownership'), title_clear: v('f-title'),
+    monthly_income: nv('f-monthly-income'), annual_income: nv('f-annual-income'),
+    other_income: nv('f-other-income'), income_proof: v('f-income-proof'),
+    existing_emi: nv('f-existing-emi'), outstanding_loans: nv('f-outstanding'),
+    credit_score: nv('f-credit-score'), bureau: v('f-bureau'),
+    remarks: v('f-remarks'),
+    docs_collected: docsDone,
+    stage: 'DDE Review',
+    created_by: currentUser.id,
+    assigned_to: null, assigned_to_name: null,
+    stage_history: [{stage:'QDE',at:new Date().toISOString(),by:currentProfile?.full_name},{stage:'DDE',at:new Date().toISOString(),by:currentProfile?.full_name},{stage:'DDE Review',at:new Date().toISOString(),by:currentProfile?.full_name}]
+  };
+
+  const {error} = await sb.from('leads').insert(payload);
+  if(error){ showEl('lead-error', error.message); return; }
+  closeModal('lead-modal');
+  showToast('Lead created: '+appId,'success');
+  loadPool(); loadMyCases();
+}
+
+// ══════════════════════════════════════════════
+// CASE DETAIL
+// ══════════════════════════════════════════════
+const STAGE_CHECKLISTS = {
+  'DDE Review':['Review QDE data for completeness','Verify applicant identity details','Validate loan amount and purpose','Check property address completeness','Verify income details entered','Add missing collateral details','Complete income assessment fields','Validate customer mobile and email','Review co-applicant details if any','Confirm all documents marked as collected'],
+  'BPO Review':['Access Verification Tab → Other Verification','Complete RCU initiation form','Perform CIBIL / bureau check','Validate mobile number via OTP','Check employment verification','Complete internal data validation checklist','Cross-check property address with documents','Verify co-applicant details','Complete BPO stage checklist'],
+  'Under Review':['Cross-verify all filled details','Rectify any discrepancies found','Initiate RCU Verification','Initiate Legal Verification','Initiate Technical 1','Initiate Technical 2 (if applicable)','Upload CAM Report','Set loan offer in DOA system','Verify LTV ratio is within limit','Complete BCM stage checklist'],
+  'In Principle Sanction':['Confirm RCU verification completed','Confirm Legal verification completed','Confirm Technical 1 completed','Confirm Technical 2 completed','Review offer details with customer','Generate unsigned sanction letter','Complete In-Principle checklist'],
+  'Loan Sanction':['Perform Penny Drop verification','Complete NACH registration','Execute eSign (offline) - E-Registration tab','Add applicant insurance details','Add co-applicant insurance details','Initiate RCU Stage 2 (document vetting)','Generate unsigned loan agreement','Complete Loan Sanction checklist'],
+  'Disbursal Ready':['CO: Initiate disbursement request','CO: Fill disbursement amount','CO: Forward to BPO','BPO: Complete disbursement forms','BPO: Complete BPO checklist','BPO: Forward to OPS','OPS: Verify all prior approvals','OPS: Complete OPS checklist','OPS: Approve disbursement']
+};
+
+async function openCase(id){
+  const {data} = await sb.from('leads').select('*').eq('id',id).single();
+  if(!data) return;
+  currentCase = data;
+  document.getElementById('case-modal-id').textContent = data.application_id;
+  document.getElementById('case-modal-name').textContent = `${data.first_name} ${data.last_name} · ${data.mobile||''} · ${data.branch_code||''}`;
+  renderCasePipeline(data.stage);
+  caseTab('overview', document.querySelector('#case-modal .step-tab'));
+  renderCaseOverview(data);
+  renderCaseChecklist(data);
+  renderCaseDetails(data);
+  renderCaseHistory(data);
+  renderCaseFooter(data);
+  document.getElementById('case-modal').classList.add('open');
+}
+
+function renderCasePipeline(activeStage){
+  const idx = STAGES.indexOf(activeStage);
+  document.getElementById('case-pipeline').innerHTML = STAGES.map((s,i)=>`
+    <div class="pipe-step">
+      <div class="pipe-node ${i<idx?'done':i===idx?'active':'locked'}">${s}</div>
+      ${i<STAGES.length-1?'<div class="pipe-arrow">›</div>':''}
+    </div>`).join('');
+}
+
+function renderCaseOverview(d){
+  document.getElementById('case-tab-overview').innerHTML = `
+    <div class="form-grid" style="margin-bottom:16px">
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Stage</div>
+        <div style="margin-top:4px"><span class="badge ${STAGE_BADGE[d.stage]||'badge-gray'} "style="font-size:12px">${d.stage}</span></div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Loan Amount</div>
+        <div style="font-size:16px;font-weight:600;margin-top:4px">₹${(d.loan_amount||0).toLocaleString('en-IN')}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Product</div>
+        <div style="font-size:14px;font-weight:500;margin-top:4px">${d.product_type||'-'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Assigned To</div>
+        <div style="font-size:14px;font-weight:500;margin-top:4px">${d.assigned_to_name||'Unassigned'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Branch</div>
+        <div style="font-size:14px;font-weight:500;margin-top:4px">${d.branch_code||'-'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Credit Score</div>
+        <div style="font-size:14px;font-weight:500;margin-top:4px">${d.credit_score||'-'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Monthly Income</div>
+        <div style="font-size:14px;font-weight:500;margin-top:4px">${d.monthly_income?'₹'+d.monthly_income.toLocaleString('en-IN'):'-'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Property Type</div>
+        <div style="font-size:14px;font-weight:500;margin-top:4px">${d.property_type||'-'}</div></div>
+    </div>
+    ${d.remarks?`<div style="background:var(--bg);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--muted)"><strong>Remarks:</strong> ${d.remarks}</div>`:''}
+  `;
+}
+
+function renderCaseChecklist(d){
+  const stage = d.stage;
+  const items = STAGE_CHECKLISTS[stage]||[];
+  const done = d.checklist_done||[];
+  if(!items.length){
+    document.getElementById('case-tab-checklist').innerHTML='<div class="empty-state"><div class="empty-text">No checklist for this stage</div></div>';
+    return;
+  }
+  document.getElementById('case-tab-checklist').innerHTML = `
+    <ul class="checklist" id="live-checklist">
+      ${items.map((item,i)=>`
+        <li class="check-item ${done.includes(i)?'checked':''}" onclick="toggleCaseCheck(${i},this)">
+          <div class="check-box"></div>
+          <span class="check-label">${item}</span>
+        </li>`).join('')}
+    </ul>
+    <div style="margin-top:16px;font-size:13px;color:var(--muted)">${done.length}/${items.length} items completed</div>
+  `;
+}
+
+async function toggleCaseCheck(idx, el){
+  el.classList.toggle('checked');
+  const done = [...document.querySelectorAll('#live-checklist .check-item.checked')].map(li=>{
+    return [...document.querySelectorAll('#live-checklist .check-item')].indexOf(li);
+  });
+  await sb.from('leads').update({checklist_done:done}).eq('id',currentCase.id);
+  currentCase.checklist_done = done;
+  const total = STAGE_CHECKLISTS[currentCase.stage]?.length||0;
+  document.querySelector('#case-tab-checklist > div:last-child').textContent=`${done.length}/${total} items completed`;
+}
+
+function renderCaseDetails(d){
+  const rows = [
+    ['Application ID',d.application_id],['First Name',d.first_name],['Last Name',d.last_name],
+    ['Mobile',d.mobile],['Email',d.email||'-'],['Date of Birth',d.dob||'-'],
+    ['Gender',d.gender||'-'],['PAN',d.pan||'-'],['Aadhaar',d.aadhaar||'-'],
+    ['Employment',d.employment_type||'-'],['Employer',d.employer||'-'],
+    ['Address',d.address||'-'],
+    ['—Property—',''],
+    ['Property Type',d.property_type||'-'],['Property Usage',d.property_usage||'-'],
+    ['Area (sq.ft)',d.property_area||'-'],['Market Value',d.market_value?'₹'+d.market_value.toLocaleString('en-IN'):'-'],
+    ['Distress Value',d.distress_value?'₹'+d.distress_value.toLocaleString('en-IN'):'-'],
+    ['Property Address',d.property_address||'-'],
+    ['—Income—',''],
+    ['Monthly Income',d.monthly_income?'₹'+d.monthly_income.toLocaleString('en-IN'):'-'],
+    ['Annual Income',d.annual_income?'₹'+d.annual_income.toLocaleString('en-IN'):'-'],
+    ['Existing EMI',d.existing_emi?'₹'+d.existing_emi.toLocaleString('en-IN'):'-'],
+    ['Credit Score',d.credit_score||'-'],['Bureau',d.bureau||'-'],
+    ['—Co-Applicant—',''],
+    ['Co-Applicant Name',d.co_applicant_name||'-'],['Co-Applicant Mobile',d.co_applicant_mobile||'-'],
+    ['Co-Applicant PAN',d.co_applicant_pan||'-'],['Relationship',d.co_relation||'-'],
+  ];
+  document.getElementById('case-tab-details').innerHTML = `
+    <table style="width:100%">
+      ${rows.map(([k,v])=>k.startsWith('—')?
+        `<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-top:1px solid var(--border)">${k.replace(/—/g,'')}</td></tr>`:
+        `<tr><td style="padding:7px 0;color:var(--muted);font-size:13px;width:45%">${k}</td><td style="padding:7px 0;font-size:13px;font-weight:500">${v||'-'}</td></tr>`
+      ).join('')}
+    </table>`;
+}
+
+function renderCaseHistory(d){
+  const history = d.stage_history||[];
+  document.getElementById('case-tab-history').innerHTML = history.length?`
+    <div style="position:relative;padding-left:20px">
+      ${history.map((h,i)=>`
+        <div style="position:relative;padding:0 0 16px 20px;border-left:2px solid ${i===history.length-1?'var(--blue)':'var(--border)'}">
+          <div style="position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:${i===history.length-1?'var(--blue)':'var(--border-md)'}"></div>
+          <div style="font-size:13px;font-weight:600">${h.stage}</div>
+          <div style="font-size:12px;color:var(--muted)">${h.by||'System'} · ${new Date(h.at).toLocaleString('en-IN')}</div>
+        </div>`).join('')}
+    </div>`:'<div class="empty-state"><div class="empty-text">No history yet</div></div>';
+}
+
+function renderCaseFooter(d){
+  const role = currentProfile?.role;
+  const stageIdx = STAGES.indexOf(d.stage);
+  const nextStage = STAGES[stageIdx+1];
+  const canMove = role==='ADMIN' || (ROLE_STAGE_MAP[role]||[]).includes(d.stage);
+
+  let html = '';
+  if(!d.assigned_to){
+    html += `<button class="btn btn-primary" onclick="selfAssignAndRefresh('${d.id}')">Pick this case</button>`;
+  }
+  if(canMove && nextStage && d.assigned_to===currentUser.id){
+    html += `<button class="btn btn-primary" onclick="moveStage('${d.id}','${nextStage}')">Move to: ${nextStage} →</button>`;
+  }
+  if(d.stage==='Disbursal Ready' && (role==='OPS'||role==='ADMIN') && d.assigned_to===currentUser.id){
+    html += `<button class="btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green)" onclick="moveStage('${d.id}','Fully Disbursed')">✓ Mark Fully Disbursed</button>`;
+  }
+  document.getElementById('case-modal-footer').innerHTML = html||'<span style="font-size:13px;color:var(--muted)">No actions available for your role at this stage</span>';
+}
+
+async function selfAssignAndRefresh(id){
+  await selfAssign(id);
+  await openCase(id);
+}
+
+async function moveStage(id, newStage){
+  const histEntry = {stage:newStage, at:new Date().toISOString(), by:currentProfile?.full_name||currentUser.email};
+  const current = currentCase;
+  const newHistory = [...(current.stage_history||[]), histEntry];
+  const {error} = await sb.from('leads').update({
+    stage: newStage,
+    stage_history: newHistory,
+    updated_at: new Date().toISOString(),
+    checklist_done: []
+  }).eq('id',id);
+  if(!error){
+    showToast(`Moved to: ${newStage}`,'success');
+    closeModal('case-modal');
+    loadPool(); loadMyCases();
+  }
+}
+
+function caseTab(tab, el){
+  document.querySelectorAll('#case-modal .step-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  ['overview','checklist','details','history'].forEach(t=>{
+    document.getElementById('case-tab-'+t).classList.toggle('hidden', t!==tab);
+  });
+}
+
+// ══════════════════════════════════════════════
+// USERS ADMIN
+// ══════════════════════════════════════════════
+async function loadUsers(){
+  if(!sb) return;
+  const {data} = await sb.from('profiles').select('*').order('created_at');
+  const tbody = document.getElementById('users-body');
+  if(!data?.length){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No users yet</td></tr>'; return; }
+  tbody.innerHTML = data.map(u=>`
+    <tr>
+      <td><strong>${u.full_name||'-'}</strong></td>
+      <td style="color:var(--muted)">${u.email||'-'}</td>
+      <td><span class="badge ${roleBadge(u.role)}">${u.role||'-'}</span></td>
+      <td>${u.branch_code||'-'}</td>
+      <td><span class="badge badge-green">Active</span></td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Remove</button></td>
+    </tr>`).join('');
+}
+
+function roleBadge(r){
+  return {CO:'badge-blue',BPO:'badge-teal',BCM:'badge-amber',BBM:'badge-pink',OPS:'badge-pink',ADMIN:'badge-red'}[r]||'badge-gray';
+}
+
+function openNewUser(){
+  document.getElementById('user-modal').classList.add('open');
+  loadBranchOptions('u-branch');
+}
+
+async function createUser(){
+  const name = document.getElementById('u-name').value.trim();
+  const email = document.getElementById('u-email').value.trim();
+  const pwd = document.getElementById('u-pwd').value;
+  const role = document.getElementById('u-role').value;
+  const branch = document.getElementById('u-branch').value;
+  if(!name||!email||!pwd||!role||!branch){ showEl('user-error','All fields are required'); return; }
+
+  // Create auth user via admin — note: in client-side only we use signUp
+  const {data, error} = await sb.auth.signUp({email, password:pwd, options:{data:{full_name:name}}});
+  if(error){ showEl('user-error', error.message); return; }
+
+  // Insert profile
+  await sb.from('profiles').upsert({
+    id: data.user.id, full_name:name, email, role, branch_code:branch
+  });
+  showEl('user-success','User created! They can now log in.');
+  hideEl('user-error');
+  setTimeout(()=>{ closeModal('user-modal'); loadUsers(); },1500);
+}
+
+async function deleteUser(id){
+  if(!confirm('Remove this user?')) return;
+  await sb.from('profiles').delete().eq('id',id);
+  loadUsers();
+  showToast('User removed','success');
+}
+
+// ══════════════════════════════════════════════
+// BRANCHES
+// ══════════════════════════════════════════════
+async function loadBranches(){
+  const {data} = await sb.from('branches').select('*').order('branch_code');
+  const tbody = document.getElementById('branches-body');
+  if(!data?.length){ tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No branches yet</td></tr>'; return; }
+  tbody.innerHTML = data.map(b=>`
+    <tr>
+      <td><strong>${b.branch_code}</strong></td>
+      <td>${b.branch_name}</td>
+      <td>${b.city||'-'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteBranch('${b.id}')">Remove</button></td>
+    </tr>`).join('');
+}
+
+async function loadBranchOptions(selectId='f-branch'){
+  if(!sb) return;
+  const {data} = await sb.from('branches').select('*').order('branch_code');
+  const el = document.getElementById(selectId);
+  if(!el) return;
+  el.innerHTML = '<option value="">Select branch</option>' + (data||[]).map(b=>`<option value="${b.branch_code}">${b.branch_code} — ${b.branch_name}</option>`).join('');
+}
+
+function openNewBranch(){ document.getElementById('branch-modal').classList.add('open'); }
+
+async function createBranch(){
+  const code = document.getElementById('b-code').value.trim().toUpperCase();
+  const name = document.getElementById('b-name').value.trim();
+  const city = document.getElementById('b-city').value.trim();
+  if(!code||!name){ showEl('branch-error','Code and name required'); return; }
+  const {error} = await sb.from('branches').insert({branch_code:code, branch_name:name, city});
+  if(error){ showEl('branch-error', error.message); return; }
+  closeModal('branch-modal');
+  showToast('Branch added','success');
+  loadBranches();
+}
+
+async function deleteBranch(id){
+  if(!confirm('Remove this branch?')) return;
+  await sb.from('branches').delete().eq('id',id);
+  loadBranches();
+}
+
+// ══════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════
+function v(id){ return document.getElementById(id)?.value?.trim()||null; }
+function nv(id){ const val=document.getElementById(id)?.value; return val?Number(val):null; }
+function showEl(id,msg){ const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+function hideEl(id){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast'+(type?' '+type:'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function timeAgo(ts){
+  if(!ts) return '-';
+  const diff = Date.now()-new Date(ts).getTime();
+  const m=Math.floor(diff/60000), h=Math.floor(m/60), d=Math.floor(h/24);
+  if(d>30) return new Date(ts).toLocaleDateString('en-IN');
+  if(d) return d+'d ago';
+  if(h) return h+'h ago';
+  if(m) return m+'m ago';
+  return 'just now';
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async ()=>{
+  if(!initSupabase()){
+    showConfigModal();
+    return;
+  }
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    await loadProfile();
+    enterApp();
+  }
+});
+</script>
+</body>
+</html>
